@@ -2,6 +2,7 @@
 using API.DTOs;
 using API.Entities;
 using API.Extensions;
+using API.Helpers;
 using API.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -13,9 +14,11 @@ namespace API.Controllers;
 public class UsersController(IUserRepository userRepository, IMapper mapper, IPhotoService photoService) : BaseApiController
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers()
+    public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers([FromQuery] UserParams userParams)
     {
-        var users = await userRepository.GetMEmbersAsync();
+        userParams.CurrentUsername = User.GetUserName();
+        var users = await userRepository.GetMEmbersAsync(userParams);
+        Response.AddPaginationHeader(users);
         return Ok(users);
     }
 
@@ -102,7 +105,7 @@ public class UsersController(IUserRepository userRepository, IMapper mapper, IPh
     {
         var user = await userRepository.GetUserByUsernameAsync(User.GetUserName());
 
-        if(user == null) return BadRequest("User not found");
+        if (user == null) return BadRequest("User not found");
 
         var photo = user.Photos.FirstOrDefault(x => x.Id == photoId);
 
@@ -110,7 +113,7 @@ public class UsersController(IUserRepository userRepository, IMapper mapper, IPh
 
         if (photo.PublicId != null)
         {
-            var result = await photoService.DeletePhotoAsync(photo.PublicId); 
+            var result = await photoService.DeletePhotoAsync(photo.PublicId);
             if (result.Error != null) return BadRequest(result.Error.Message);
         }
 
