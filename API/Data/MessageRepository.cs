@@ -10,6 +10,11 @@ namespace API.Interfaces;
 
 public class MessageRepository(DataContext context, IMapper mapper) : IMessageRepository
 {
+    public void AddGroup(Group group)
+    {
+        context.Groups.Add(group);
+    }
+
     public void AddMessage(Message message)
     {
         context.Messages.Add(message);
@@ -18,6 +23,11 @@ public class MessageRepository(DataContext context, IMapper mapper) : IMessageRe
     public void DeleteMessage(Message message)
     {
         context.Messages.Remove(message);
+    }
+
+    public async Task<Connection?> GetConnection(string connectionId)
+    {
+        return await context.Connections.FindAsync(connectionId);
     }
 
     public async Task<Message?> GetMessage(int id)
@@ -46,6 +56,12 @@ public class MessageRepository(DataContext context, IMapper mapper) : IMessageRe
         return await PagedList<MessageDto>.CreateAsync(messages, messageParams.PageNumber, messageParams.PageSize);
     }
 
+    public async Task<Group?> GetMessageGroup(string groupName)
+    {
+        return await context.Groups.Include(x => x.Connections)
+            .FirstOrDefaultAsync(x => x.Name == groupName);
+    }
+
     public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUserName, string recipientUsername)
     {
         var messages = await context.Messages
@@ -71,6 +87,11 @@ public class MessageRepository(DataContext context, IMapper mapper) : IMessageRe
 
         return mapper.Map<IEnumerable<MessageDto>>(messages);
 
+    }
+
+    public void RemoveConnection(Connection connection)
+    {
+        context.Connections.Remove(connection);
     }
 
     public async Task<bool> SaveAllAsync()
