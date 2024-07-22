@@ -19,7 +19,7 @@ export class MemberMessagesComponent  {
   sendMessage() {
     this.messageService.sendMessage(this.username(), this.messageContent).then(() => {
       this.messageForm?.reset()
-    })
+    });
   }
 
 
